@@ -1,0 +1,384 @@
+<%- include('partials/header', { title: 'Dashboard' }) %>
+
+<!-- Modal Popup Notifikasi (Permanen muncul setiap buka dashboard) -->
+<div id="notificationModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden transition-all duration-300">
+  <div class="bg-white rounded-2xl max-w-md w-full mx-4 overflow-hidden shadow-2xl transform transition-all duration-300 scale-95 opacity-0" id="notificationModalContent">
+    <div id="notifImageContainer" class="hidden">
+      <img id="notifImage" src="" alt="Notification" class="w-full object-cover" style="aspect-ratio: 16/9;">
+    </div>
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <i class="fas fa-bell text-blue-500 text-lg"></i>
+          </div>
+          <h3 id="notifTitle" class="text-xl font-bold text-gray-800">Pengumuman</h3>
+        </div>
+        <button onclick="closeNotification()" class="text-gray-400 hover:text-gray-600 transition">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <p id="notifMessage" class="text-gray-600 mb-6 leading-relaxed"></p>
+      <button onclick="closeNotification()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition">
+        <i class="fas fa-check-circle mr-2"></i> Mengerti
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="relative bg-gradient-to-br from-blue-500 to-blue-700 rounded-[28px] shadow-xl shadow-blue-500/20 px-7 py-7 mb-8 overflow-hidden group">
+  <div class="absolute -top-24 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl -z-0 transition-transform duration-700 group-hover:scale-110"></div>
+  <div class="absolute -bottom-24 -left-10 w-56 h-56 bg-blue-900/20 rounded-full blur-3xl -z-0 transition-transform duration-700 group-hover:scale-110"></div>
+  <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] opacity-50 z-0"></div>
+
+  <div class="relative z-10 flex items-center justify-between pb-5 mb-5 border-b border-blue-400/30">
+    <div class="flex items-center gap-3.5">
+      <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-lg shadow-sm">
+        <i class="fa-solid fa-user"></i>
+      </div>
+      <div>
+        <p class="text-base font-medium text-white tracking-wide leading-none"><%= user.username %></p>
+        <p id="userEmail" class="text-xs font-medium text-white opacity-90 mt-0.5"><%= user.email %></p>
+      </div>
+    </div>
+    <a href="/profile" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center text-white backdrop-blur-md border border-white/10">
+      <i class="fa-solid fa-gear text-sm"></i>
+    </a>
+  </div>
+
+  <div class="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div>
+      <p class="text-xs font-medium text-blue-100 mb-1.5 opacity-90">Total Saldo Tersedia</p>
+      <div class="flex items-center gap-2">
+        <span id="balanceHidden" class="text-xl font-medium text-white hidden">Rp ••••••</span>
+        <span id="balanceReal" class="text-xl font-medium text-white">Rp <%= (user.balance || 0).toLocaleString('id-ID') %></span>
+        <button onclick="toggleBalance()" class="text-white/70 hover:text-white transition-colors">
+          <i id="balanceEyeIcon" class="far fa-eye-slash text-sm"></i>
+        </button>
+      </div>
+    </div>
+    <div class="flex gap-3 w-full md:w-auto">
+      <a href="/withdraw" class="flex-1 md:flex-none inline-flex justify-center items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/20 px-5 py-3 rounded-2xl text-xs font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+        <i class="fas fa-arrow-up text-xs"></i> Tarik Dana
+      </a>
+      <a href="/deposit" class="flex-1 md:flex-none inline-flex justify-center items-center gap-2 bg-white text-blue-700 hover:bg-slate-50 px-5 py-3 rounded-2xl text-xs font-medium shadow-lg shadow-black/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+        <i class="fas fa-plus text-xs"></i> Isi Saldo
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm shadow-slate-200/50 p-5 flex items-center gap-4 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+    <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+      <i class="fas fa-arrow-down text-lg"></i>
+    </div>
+    <div>
+      <p class="text-xs font-medium text-slate-800 mb-0.5">Total Deposit</p>
+      <p class="text-base font-medium text-slate-800">Rp <%= (totalDeposit || 0).toLocaleString('id-ID') %></p>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm shadow-slate-200/50 p-5 flex items-center gap-4 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+    <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+      <i class="fas fa-arrow-up text-lg"></i>
+    </div>
+    <div>
+      <p class="text-xs font-medium text-slate-800 mb-0.5">Total Penarikan</p>
+      <p class="text-base font-medium text-slate-800">Rp <%= (totalWithdraw || 0).toLocaleString('id-ID') %></p>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm shadow-slate-200/50 p-5 flex items-center gap-4 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+    <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+      <i class="fas fa-exchange-alt text-lg"></i>
+    </div>
+    <div>
+      <p class="text-xs font-medium text-slate-800 mb-0.5">Total Transaksi</p>
+      <p class="text-base font-medium text-slate-800"><%= recentTrx ? recentTrx.length : 0 %> Transaksi</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION NOTIFIKASI / BERITA -->
+<% if (allNotifications && allNotifications.length > 0) { %>
+<div class="bg-white rounded-[24px] border border-slate-100 shadow-sm shadow-slate-200/50 overflow-hidden mb-8">
+  <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+        <i class="fas fa-newspaper text-sm"></i>
+      </div>
+      <h2 class="text-base font-semibold text-gray-800">Berita & Pengumuman</h2>
+    </div>
+    <span class="text-xs text-gray-400"><%= allNotifications.length %> notifikasi</span>
+  </div>
+  
+  <div class="divide-y divide-gray-100">
+    <% allNotifications.forEach(notif => { %>
+      <div class="p-5 hover:bg-gray-50 transition-all duration-200 group">
+        <div class="flex flex-col md:flex-row gap-4">
+          <% if (notif.imageUrl && notif.imageUrl.trim() !== '') { %>
+            <div class="md:w-48 flex-shrink-0">
+              <img src="<%= notif.imageUrl %>" alt="<%= notif.title %>" class="w-full h-28 object-cover rounded-xl shadow-sm group-hover:shadow-md transition">
+            </div>
+          <% } %>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <h3 class="text-md font-bold text-gray-800"><%= notif.title %></h3>
+              <% if (notif.displayType === 'permanent') { %>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">
+                  <i class="fas fa-infinity text-[8px]"></i> Permanen
+                </span>
+              <% } else { %>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
+                  <i class="fas fa-clock text-[8px]"></i> Sekali lihat
+                </span>
+              <% } %>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-2"><%= notif.message %></p>
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span><i class="fas fa-calendar-alt mr-1"></i> <%= new Date(notif.createdAt).toLocaleDateString('id-ID') %></span>
+              <span><i class="fas fa-clock mr-1"></i> <%= new Date(notif.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+<% } %>
+
+<div class="bg-white rounded-[24px] border border-slate-100 shadow-sm shadow-slate-200/50 p-6 mb-8 transition-all duration-300 hover:shadow-md">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-4">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-2xl bg-slate-50 border border-slate-100 text-blue-600 flex items-center justify-center">
+        <i class="fas fa-key text-sm"></i>
+      </div>
+      <div>
+        <h2 class="text-base font-medium text-slate-800">Kunci API</h2>
+        <p class="text-xs font-medium text-slate-800 mt-0.5">Kunci API bersifat rahasia dan hanya untuk Anda.</p>
+      </div>
+    </div>
+    <button onclick="openRegenModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-2xl text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2">
+      <i class="fas fa-rotate text-xs"></i> Buat Baru
+    </button>
+  </div>
+  
+  <div class="flex items-center bg-slate-50/80 border border-slate-200 rounded-2xl p-1.5 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+    <input id="apiKeyField" type="password" value="<%= apiKeys && apiKeys.length > 0 ? apiKeys[0].key : '' %>" readonly class="flex-1 bg-transparent px-3 text-xs font-medium text-slate-700 outline-none w-full font-mono">
+    <div class="flex items-center gap-1.5 ml-2 pr-1">
+      <button onclick="toggleApiKey()" class="w-10 h-10 text-slate-800 hover:text-slate-700 rounded-xl transition-all flex items-center justify-center">
+        <i id="apiKeyToggleIcon" class="far fa-eye text-sm"></i>
+      </button>
+      <button onclick="copyKey()" class="w-10 h-10 bg-blue-500 text-white hover:bg-blue-600 rounded-xl transition-all flex items-center justify-center shadow-sm shadow-blue-200">
+        <i class="far fa-copy text-sm"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="mb-5 flex items-center justify-between">
+  <h2 class="text-lg font-medium text-slate-800">Transaksi Terbaru</h2>
+  <a href="/deposit" class="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors">
+    Lihat Semua
+  </a>
+</div>
+
+<div class="bg-white rounded-[24px] border border-slate-100 shadow-sm shadow-slate-200/50 overflow-hidden mb-10">
+  <% if (!recentTrx || recentTrx.length === 0) { %>
+    <div class="p-8 text-center flex flex-col items-center justify-center text-slate-800">
+      <div class="mb-3 opacity-50"><i class="fas fa-receipt text-3xl"></i></div>
+      <p class="text-xs font-medium">Belum ada transaksi.</p>
+    </div>
+  <% } else { %>
+    <ul class="divide-y divide-slate-100/80">
+      <% recentTrx.forEach(t => { %>
+      <li>
+        <a href="/invoice/<%= t.reference %>" class="px-5 py-4 hover:bg-slate-50/80 transition-colors duration-200 flex items-center justify-between group w-full cursor-pointer block">
+          <div class="flex items-center gap-4 flex-1 min-w-0">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110">
+              <i class="fas fa-arrow-down text-lg"></i>
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col justify-center">
+              <span class="text-xs font-medium text-blue-600 group-hover:text-blue-700 mb-0.5 truncate">
+                #<%= t.reference %>
+              </span>
+              <p class="text-xs font-medium text-slate-800">
+                <%= new Date(t.createdAt).toLocaleString('id-ID', {
+                  timeZone: 'Asia/Jakarta',
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                }).replace(/\./g, ':') %>
+              </p>
+              <div class="">
+                <span class="inline-flex items-center gap-1 text-xs font-medium 
+                  <%= t.status==='paid' ? 'text-green-600' : t.status==='expired' ? 'text-red-600' : 'text-amber-600' %>">
+                  <% if (t.status === 'paid') { %><i class="fas fa-check-circle text-xs"></i><% } %>
+                  <% if (t.status === 'pending') { %><i class="fas fa-clock text-xs"></i><% } %>
+                  <% if (t.status === 'expired') { %><i class="fas fa-times-circle text-xs"></i><% } %>
+                  <%= t.status.charAt(0).toUpperCase() + t.status.slice(1) %>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right ml-4 shrink-0 flex flex-col justify-center">
+            <p class="text-sm font-medium text-slate-800 mb-0.5">
+              <% if (t.type === 'deposit' || t.amount > 0) { %>
+                <span class="text-slate-800">+ Rp<%= (t.amount || 0).toLocaleString('id-ID') %></span>
+              <% } else { %>
+                <span class="text-slate-800">- Rp<%= Math.abs(t.amount || 0).toLocaleString('id-ID') %></span>
+              <% } %>
+            </p>
+            <p class="text-xs font-medium text-slate-800">Fee Rp<%= (t.fee || 0).toLocaleString('id-ID') %></p>
+          </div>
+        </a>
+      </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</div>
+
+<script>
+  let currentNotification = null;
+  let isModalOpen = false;
+  
+  async function checkAndShowNotification() {
+    try {
+      const response = await fetch('/api/notifications/active');
+      const data = await response.json();
+      
+      if (data.success && data.notifications && data.notifications.length > 0) {
+        // Cari notifikasi permanen (selalu tampil setiap buka dashboard)
+        let notifToShow = null;
+        
+        for (const notif of data.notifications) {
+          if (notif.displayType === 'permanent') {
+            notifToShow = notif;
+            break;
+          }
+        }
+        
+        if (notifToShow && !isModalOpen) {
+          currentNotification = notifToShow;
+          showNotification(currentNotification);
+          isModalOpen = true;
+          
+          // Tandai sudah dilihat (untuk tracking admin)
+          fetch(`/api/notifications/seen/${notifToShow._id}`, { method: 'POST' });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  }
+  
+  function showNotification(notif) {
+    const modal = document.getElementById('notificationModal');
+    const content = document.getElementById('notificationModalContent');
+    const titleEl = document.getElementById('notifTitle');
+    const messageEl = document.getElementById('notifMessage');
+    const imageContainer = document.getElementById('notifImageContainer');
+    const imageEl = document.getElementById('notifImage');
+    
+    titleEl.textContent = notif.title || 'Pengumuman';
+    messageEl.textContent = notif.message;
+    
+    if (notif.imageUrl && notif.imageUrl.trim() !== '') {
+      imageEl.src = notif.imageUrl;
+      imageContainer.classList.remove('hidden');
+    } else {
+      imageContainer.classList.add('hidden');
+    }
+    
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+  }
+  
+  function closeNotification() {
+    const modal = document.getElementById('notificationModal');
+    const content = document.getElementById('notificationModalContent');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      isModalOpen = false;
+    }, 300);
+  }
+  
+  // Check notification on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    checkAndShowNotification();
+  });
+  
+  function maskEmail(email) {
+    if (!email || !email.includes('@')) return email;
+    const [name, domain] = email.split('@');
+    if (name.length <= 2) return `**@${domain}`;
+    return name.substring(0, 2) + '****' + '@' + domain;
+  }
+  
+  const emailEl = document.getElementById('userEmail');
+  if (emailEl && emailEl.textContent) emailEl.textContent = maskEmail('<%= user.email %>');
+
+  function toggleApiKey() {
+    const field = document.getElementById('apiKeyField');
+    const icon = document.getElementById('apiKeyToggleIcon');
+    if (field) field.type = field.type === 'password' ? 'text' : 'password';
+    if (icon) {
+      icon.classList.toggle('fa-eye');
+      icon.classList.toggle('fa-eye-slash');
+    }
+  }
+
+  function toggleBalance() {
+    const hidden = document.getElementById('balanceHidden');
+    const real = document.getElementById('balanceReal');
+    const icon = document.getElementById('balanceEyeIcon');
+    if (real) real.classList.toggle('hidden');
+    if (hidden) hidden.classList.toggle('hidden');
+    if (icon) {
+      icon.classList.toggle('fa-eye-slash');
+      icon.classList.toggle('fa-eye');
+    }
+  }
+
+  function copyKey() {
+    const field = document.getElementById('apiKeyField');
+    if (!field || !field.value) return;
+    navigator.clipboard.writeText(field.value);
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.className = 'fas fa-check text-sm';
+      setTimeout(() => { icon.className = 'far fa-copy text-sm'; }, 2000);
+    }
+  }
+
+  function openRegenModal() {
+    if (confirm('Apakah Anda yakin ingin membuat API Key baru? Key lama akan tidak berlaku.')) {
+      fetch('/api/user/api-key/regenerate', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.apiKey) {
+            document.getElementById('apiKeyField').value = data.apiKey;
+            alert('API Key baru berhasil dibuat!');
+          } else {
+            alert('Gagal membuat API Key baru');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Terjadi kesalahan');
+        });
+    }
+  }
+</script>
+
+<%- include('partials/footer') %>
